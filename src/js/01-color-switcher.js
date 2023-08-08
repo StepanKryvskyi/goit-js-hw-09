@@ -6,11 +6,11 @@ function getRandomHexColor() {
     .padStart(6, '0')}`;
 }
 
-const startButton = document.querySelector('[data-start]');
-const stopButton = document.querySelector('[data-stop]');
+const startBtn = document.querySelector('[data-start]');
+const stopBtn = document.querySelector('[data-stop]');
 
-startButton.addEventListener('click', startColorSwitcher);
-stopButton.addEventListener('click', stopColorSwitcher);
+startBtn.addEventListener('click', startColorSwitcher);
+stopBtn.addEventListener('click', stopColorSwitcher);
 
 
 let intervalId;
@@ -20,12 +20,12 @@ function changeBackgroundColor() {
 }
 
 function startColorSwitcher() {
-  startButton.disabled = true;
+  startBtn.disabled = true;
   intervalId = setInterval(changeBackgroundColor, 1000);
 }
 
 function stopColorSwitcher() {
-  startButton.disabled = false;
+  startBtn.disabled = false;
   clearInterval(intervalId);
 }
 
