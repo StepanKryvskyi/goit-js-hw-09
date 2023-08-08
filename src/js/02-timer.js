@@ -1,5 +1,15 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+
+const startBtn = document.querySelector('[data-start]');
+const daysRef = document.querySelector('[data-days]');
+const hoursRef = document.querySelector('[data-hours]');
+const minutesRef = document.querySelector('[data-minutes]');
+const secondsRef = document.querySelector('[data-seconds]');
+let timerId = null;
+
+startBtn.setAttribute('disabled', true);
 
 function convertMs(ms) {
   const second = 1000;
@@ -15,59 +25,54 @@ function convertMs(ms) {
   return { days, hours, minutes, seconds };
 }
 
-function addLeadingZero(value) {
-  return value.toString().padStart(2, '0');
-}
+const addLeadingZero = value => String(value).padStart(2, 0);
 
-const datetimePicker = flatpickr('#datetime-picker', {
+const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    const selectedDate = selectedDates[0];
-
-    if (selectedDate < new Date()) {
-      window.alert('Please choose a date in the future');
-    } else {
-      startButton.disabled = false;
-      endDate = selectedDate;
+    if (selectedDates[0] < new Date()) {
+      Notify.failure('Please choose a date in the future');
+      return;
     }
+    startBtn.removeAttribute('disabled');
+
+    const showTimer = () => {
+      const now = new Date();
+      localStorage.setItem('selectedData', selectedDates[0]);
+      const selectData = new Date(localStorage.getItem('selectedData'));
+
+      if (!selectData) return;
+
+      const diff = selectData - now;
+      const { days, hours, minutes, seconds } = convertMs(diff);
+      daysRef.textContent = days;
+      hoursRef.textContent = addLeadingZero(hours);
+      minutesRef.textContent = addLeadingZero(minutes);
+      secondsRef.textContent = addLeadingZero(seconds);
+
+      if (
+        daysRef.textContent === '0' &&
+        hoursRef.textContent === '00' &&
+        minutesRef.textContent === '00' &&
+        secondsRef.textContent === '00'
+      ) {
+        clearInterval(timerId);
+      }
+    };
+
+    const onClick = () => {
+      if (timerId) {
+        clearInterval(timerId);
+      }
+      showTimer();
+      timerId = setInterval(showTimer, 1000);
+    };
+
+    startBtn.addEventListener('click', onClick);
   },
-});
+};
 
-const startButton = document.querySelector('[data-start]');
-const daysSpan = document.querySelector('[data-days]');
-const hoursSpan = document.querySelector('[data-hours]');
-const minutesSpan = document.querySelector('[data-minutes]');
-const secondsSpan = document.querySelector('[data-seconds]');
-
-let endDate;
-
-function updateTimer() {
-  const currentDate = new Date();
-  const remainingTime = endDate - currentDate;
-
-  if (remainingTime <= 0) {
-    clearInterval(intervalId);
-    startButton.disabled = true;
-    daysSpan.textContent = '00';
-    hoursSpan.textContent = '00';
-    minutesSpan.textContent = '00';
-    secondsSpan.textContent = '00';
-    return;
-  }
-
-  const { days, hours, minutes, seconds } = convertMs(remainingTime);
-
-  daysSpan.textContent = addLeadingZero(days);
-  hoursSpan.textContent = addLeadingZero(hours);
-  minutesSpan.textContent = addLeadingZero(minutes);
-  secondsSpan.textContent = addLeadingZero(seconds);
-}
-
-let intervalId;
-
-startButton.addEventListener('click', () => {
-  intervalId = setInterval(updateTimer, 1000);
-});
+flatpickr('#datetime-picker', { ...options });
